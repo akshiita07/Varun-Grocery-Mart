@@ -47,6 +47,7 @@ export default function Navbar() {
                                             <span className="cart-badge">{getItemCount()}</span>
                                         )}
                                     </Link>
+                                    <Link to="/profile" className="nav-link">Profile</Link>
                                     <button onClick={handleLogout} className="btn-logout">
                                         Logout
                                     </button>

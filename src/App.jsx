@@ -6,6 +6,7 @@ import Login from "./auth/Login";
 import Home from "./user/Home";
 import Cart from "./user/Cart";
 import Orders from "./user/Orders";
+import Profile from "./user/Profile";
 import Dashboard from "./admin/Dashboard";
 import Inventory from "./admin/Inventory";
 import Analytics from "./admin/Analytics";
@@ -38,6 +39,7 @@ export default function App() {
 
                         <Route path="/cart" element={<Cart />} />
                         <Route path="/orders" element={<Orders />} />
+                        <Route path="/profile" element={<Profile />} />
 
                         <Route path="/admin" element={<Dashboard />} />
                         <Route path="/admin/inventory" element={<Inventory />} />
