@@ -147,8 +147,8 @@ export default function Cart() {
                 `  • ${item.name} x${item.quantity} - ₹${item.price * item.quantity}`
             ).join("\\n");
 
-            const paymentInfo = paymentMethod === "cod" 
-                ? "Cash on Delivery" 
+            const paymentInfo = paymentMethod === "cod"
+                ? "Cash on Delivery"
                 : `UPI Payment${paymentAppUsed ? ` (${paymentAppUsed})` : ""} (Awaiting Verification)`;
 
             const message = `🛒 *New Order #${docRef.id.slice(-6)}*\n` +
@@ -266,16 +266,6 @@ export default function Cart() {
                         </div>
                     </div>
 
-                    {paymentMethod === "upi" && (
-                        <div className="upi-info">
-                            <p className="upi-notice">
-                                ✅ <strong>0% Gateway Fee</strong> - Save on transaction charges<br/>
-                                💳 Choose from Google Pay, PhonePe, Paytm & more<br/>
-                                🔒 Complete payment in your UPI app after placing order
-                            </p>
-                        </div>
-                    )}
-
                     <div className="checkout-actions">
                         <button
                             onClick={() => setShowCheckout(false)}
@@ -293,7 +283,6 @@ export default function Cart() {
                     </div>
                 </div>
 
-                {/* UPI Apps Selection Modal */}
                 {showUpiApps && (
                     <div className="upi-modal-overlay" onClick={() => setShowUpiApps(false)}>
                         <div className="upi-modal" onClick={(e) => e.stopPropagation()}>
@@ -301,16 +290,16 @@ export default function Cart() {
                             <p className="upi-modal-subtitle">
                                 {loading ? "Processing your order..." : "Select your preferred UPI app to complete payment"}
                             </p>
-                            
+
                             {loading && (
                                 <div className="upi-loading">
                                     <div className="spinner"></div>
                                     <p>Creating your order...</p>
                                 </div>
                             )}
-                            
-                            <div className="upi-apps-grid" style={{opacity: loading ? 0.5 : 1, pointerEvents: loading ? 'none' : 'auto'}}>
-                                <button 
+
+                            <div className="upi-apps-grid" style={{ opacity: loading ? 0.5 : 1, pointerEvents: loading ? 'none' : 'auto' }}>
+                                <button
                                     className="upi-app-btn"
                                     onClick={async () => {
                                         try {
@@ -322,11 +311,10 @@ export default function Cart() {
                                     }}
                                     disabled={loading}
                                 >
-                                    <span className="upi-app-icon">💳</span>
                                     <span className="upi-app-name">Google Pay</span>
                                 </button>
 
-                                <button 
+                                <button
                                     className="upi-app-btn"
                                     onClick={async () => {
                                         try {
@@ -338,11 +326,10 @@ export default function Cart() {
                                     }}
                                     disabled={loading}
                                 >
-                                    <span className="upi-app-icon">📱</span>
                                     <span className="upi-app-name">PhonePe</span>
                                 </button>
 
-                                <button 
+                                <button
                                     className="upi-app-btn"
                                     onClick={async () => {
                                         try {
@@ -354,28 +341,11 @@ export default function Cart() {
                                     }}
                                     disabled={loading}
                                 >
-                                    <span className="upi-app-icon">💰</span>
                                     <span className="upi-app-name">Paytm</span>
-                                </button>
-
-                                <button 
-                                    className="upi-app-btn"
-                                    onClick={async () => {
-                                        try {
-                                            await placeOrder("Other UPI App");
-                                            window.location.href = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent("Varun Grocery Mart")}&am=${total}&cu=INR`;
-                                        } catch (error) {
-                                            console.error("Error:", error);
-                                        }
-                                    }}
-                                    disabled={loading}
-                                >
-                                    <span className="upi-app-icon">🏦</span>
-                                    <span className="upi-app-name">Other UPI Apps</span>
                                 </button>
                             </div>
 
-                            <button 
+                            <button
                                 className="btn-secondary upi-cancel-btn"
                                 onClick={() => setShowUpiApps(false)}
                             >
@@ -476,7 +446,6 @@ export default function Cart() {
                                     }, 1000);
                                 }}
                             >
-                                <span className="upi-app-icon">💳</span>
                                 <span className="upi-app-name">Google Pay</span>
                             </button>
 
@@ -490,7 +459,6 @@ export default function Cart() {
                                     }, 1000);
                                 }}
                             >
-                                <span className="upi-app-icon">📱</span>
                                 <span className="upi-app-name">PhonePe</span>
                             </button>
 
@@ -504,22 +472,7 @@ export default function Cart() {
                                     }, 1000);
                                 }}
                             >
-                                <span className="upi-app-icon">💰</span>
                                 <span className="upi-app-name">Paytm</span>
-                            </button>
-
-                            <button
-                                className="upi-app-btn"
-                                onClick={() => {
-                                    window.location.href = upiLink;
-                                    setTimeout(() => {
-                                        setShowUpiApps(false);
-                                        navigate("/orders");
-                                    }, 1000);
-                                }}
-                            >
-                                <span className="upi-app-icon">🏦</span>
-                                <span className="upi-app-name">Other UPI Apps</span>
                             </button>
                         </div>
 
