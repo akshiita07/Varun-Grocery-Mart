@@ -116,10 +116,17 @@ export default function Cart() {
             }
 
             const orderDetails = cart.map(item =>
-                `${item.name} x${item.quantity} - ₹${item.price * item.quantity}`
+                `  • ${item.name} x${item.quantity} - ₹${item.price * item.quantity}`
             ).join("\\n");
 
-            const message = `New Order #${docRef.id.slice(-6)}\\n\\nCustomer: ${userDetails.name}\\nItems:\\n${orderDetails}\\n\\nTotal: ₹${total}\\nPayment: ${paymentMethod === "cod" ? "Cash on Delivery" : "Online"}\\nAddress: ${userDetails.address}\\nPhone: ${userDetails.phone}`;
+            const message = `*New Order #${docRef.id.slice(-6)}*` + "\n" +
+                `*Name:* ${userDetails.name}` + "\n" +
+                `*Phone:* ${userDetails.phone}` + "\n" +
+                `*Address:* ${userDetails.address}` + "\n" +
+                `*Order Items*` +
+                `${orderDetails}` + "\n" +
+                `*Total Amount: ₹${total}*` + "\n" +
+                `*Payment:* ${paymentMethod === "cod" ? "Cash on Delivery" : "Online Payment"}`;
 
             await fetch(`${API_URL}/notify`, {
                 method: "POST",
@@ -132,7 +139,6 @@ export default function Cart() {
             });
 
             clearCart();
-            alert("Order placed successfully! You will receive a confirmation shortly.");
             navigate("/orders");
         } catch (error) {
             console.error("Error placing order:", error);
