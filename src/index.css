@@ -1141,8 +1141,9 @@ body {
     display: flex;
     gap: 0.75rem;
     align-items: flex-end;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     margin-bottom: 0.75rem;
+    overflow-x: auto;
 }
 
 .form-grid .form-group {
@@ -1157,6 +1158,7 @@ body {
     font-size: 0.85rem;
     margin-bottom: 0.25rem;
     display: block;
+    white-space: nowrap;
 }
 
 .form-grid .form-group input,
@@ -1168,10 +1170,12 @@ body {
 .checkbox-inline {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.25rem;
     cursor: pointer;
     padding: 0.5rem 0;
     margin-top: auto;
+    height: 38px;
 }
 
 .checkbox-inline input[type="checkbox"] {
@@ -1183,8 +1187,8 @@ body {
 .form-actions {
     display: flex;
     gap: 0.5rem;
-    align-items: flex-end;
-    flex-wrap: nowrap;
+    margin-top: 0.75rem;
+    justify-content: flex-end;
 }
 
 .inventory-table {
@@ -1238,6 +1242,21 @@ body {
 .stock-toggle.out-of-stock {
     background: #f8d7da;
     color: #721c24;
+}
+
+.stock-count {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    background: #e8f5e9;
+    color: #2e7d32;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.stock-count.zero-stock {
+    background: #ffebee;
+    color: #c62828;
 }
 
 .action-buttons {
@@ -1450,6 +1469,7 @@ body {
         font-size: 0.8rem;
     }
 }
+
 /* Profile Page Styles */
 .profile-container {
     max-width: 800px;

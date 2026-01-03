@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, addDoc, doc, getDoc } from "firebase/firestore";
+import { collection, addDoc, doc, getDoc, updateDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
@@ -58,6 +58,23 @@ export default function Cart() {
         try {
             setLoading(true);
 
+            // Check stock availability before placing order
+            for (const item of cart) {
+                const productRef = doc(db, "products", item.id);
+                const productSnap = await getDoc(productRef);
+
+                if (productSnap.exists()) {
+                    const productData = productSnap.data();
+                    const currentStock = productData.stockCount || 0;
+
+                    if (currentStock < item.quantity) {
+                        alert(`Sorry, only ${currentStock} units of ${item.name} are available in stock.`);
+                        setLoading(false);
+                        return;
+                    }
+                }
+            }
+
             const order = {
                 userId: currentUser.uid,
                 userEmail: currentUser.email,
@@ -80,6 +97,23 @@ export default function Cart() {
             };
 
             const docRef = await addDoc(collection(db, "orders"), order);
+
+            // Decrement stock count for each product in the order
+            for (const item of cart) {
+                const productRef = doc(db, "products", item.id);
+                const productSnap = await getDoc(productRef);
+
+                if (productSnap.exists()) {
+                    const productData = productSnap.data();
+                    const currentStock = productData.stockCount || 0;
+                    const newStock = Math.max(0, currentStock - item.quantity);
+
+                    await updateDoc(productRef, {
+                        stockCount: newStock,
+                        stock: newStock > 0 // Auto-update stock status
+                    });
+                }
+            }
 
             const orderDetails = cart.map(item =>
                 `${item.name} x${item.quantity} - ₹${item.price * item.quantity}`

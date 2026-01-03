@@ -34,6 +34,7 @@ export default function Inventory() {
         size: "",
         category: "Dairy, Bread and Eggs",
         stock: true,
+        stockCount: "",
         image: ""
     });
 
@@ -66,7 +67,6 @@ export default function Inventory() {
                 return;
             }
 
-            // Fetch products from Firestore
             try {
                 const querySnapshot = await getDocs(collection(db, "products"));
                 const productsData = [];
@@ -88,19 +88,16 @@ export default function Inventory() {
     const handleImageUpload = (e) => {
         const file = e.target.files[0];
         if (file) {
-            // Check file size (max 2MB)
             if (file.size > 2 * 1024 * 1024) {
                 alert("Image size should be less than 2MB");
                 return;
             }
 
-            // Check file type
             if (!file.type.startsWith("image/")) {
                 alert("Please select an image file");
                 return;
             }
 
-            // Convert to base64
             const reader = new FileReader();
             reader.onloadend = () => {
                 setFormData({ ...formData, image: reader.result });
@@ -116,7 +113,6 @@ export default function Inventory() {
             await updateDoc(productRef, {
                 stock: !product.stock
             });
-            // Refresh products list
             fetchProducts();
         } catch (error) {
             console.error("Error toggling stock:", error);
@@ -129,7 +125,6 @@ export default function Inventory() {
             try {
                 await deleteDoc(doc(db, "products", productId));
                 alert("Product deleted successfully!");
-                // Refresh products list
                 fetchProducts();
             } catch (error) {
                 console.error("Error deleting product:", error);
@@ -146,6 +141,7 @@ export default function Inventory() {
             size: product.size || "",
             category: product.category,
             stock: product.stock,
+            stockCount: product.stockCount || "",
             image: product.image
         });
         setShowAddForm(true);
@@ -157,6 +153,9 @@ export default function Inventory() {
             return;
         }
 
+        const stockCountValue = formData.stockCount ? parseInt(formData.stockCount) : 0;
+        const isInStock = stockCountValue > 0;
+
         try {
             if (editingProduct) {
                 // Update existing product
@@ -166,7 +165,8 @@ export default function Inventory() {
                     price: parseFloat(formData.price),
                     size: formData.size,
                     category: formData.category,
-                    stock: formData.stock,
+                    stock: isInStock,
+                    stockCount: stockCountValue,
                     image: formData.image
                 });
                 alert("Product updated successfully!");
@@ -177,7 +177,8 @@ export default function Inventory() {
                     price: parseFloat(formData.price),
                     size: formData.size,
                     category: formData.category,
-                    stock: formData.stock,
+                    stock: isInStock,
+                    stockCount: stockCountValue,
                     image: formData.image,
                     createdAt: new Date().toISOString()
                 });
@@ -191,12 +192,12 @@ export default function Inventory() {
                 size: "",
                 category: "Dairy, Bread and Eggs",
                 stock: true,
+                stockCount: "",
                 image: ""
             });
             setEditingProduct(null);
             setShowAddForm(false);
 
-            // Refresh products list
             fetchProducts();
         } catch (error) {
             console.error("Error saving product:", error);
@@ -211,6 +212,7 @@ export default function Inventory() {
             size: "",
             category: "Dairy, Bread and Eggs",
             stock: true,
+            stockCount: "",
             image: ""
         });
         setEditingProduct(null);
@@ -240,7 +242,7 @@ export default function Inventory() {
                 <div className="product-form">
                     <h3>{editingProduct ? "Edit Product" : "Add New Product"}</h3>
                     <div className="form-grid">
-                        <div className="form-group">
+                        <div className="form-group" style={{ flex: '1.5', minWidth: '120px' }}>
                             <label>Name</label>
                             <input
                                 type="text"
@@ -250,7 +252,7 @@ export default function Inventory() {
                             />
                         </div>
 
-                        <div className="form-group">
+                        <div className="form-group" style={{ flex: '0.8', minWidth: '80px' }}>
                             <label>Price (₹)</label>
                             <input
                                 type="number"
@@ -260,7 +262,7 @@ export default function Inventory() {
                             />
                         </div>
 
-                        <div className="form-group">
+                        <div className="form-group" style={{ flex: '0.8', minWidth: '80px' }}>
                             <label>Size</label>
                             <input
                                 type="text"
@@ -270,7 +272,7 @@ export default function Inventory() {
                             />
                         </div>
 
-                        <div className="form-group">
+                        <div className="form-group" style={{ flex: '1.2', minWidth: '100px' }}>
                             <label>Category</label>
                             <select
                                 value={formData.category}
@@ -282,7 +284,29 @@ export default function Inventory() {
                             </select>
                         </div>
 
-                        <div className="form-group">
+                        <div className="form-group" style={{ flex: '0.8', minWidth: '80px' }}>
+                            <label>Stock Count</label>
+                            <input
+                                type="number"
+                                min="0"
+                                placeholder="10"
+                                value={formData.stockCount}
+                                onChange={(e) => setFormData({ ...formData, stockCount: e.target.value })}
+                            />
+                        </div>
+
+                        <div className="form-group" style={{ flex: '0.6', minWidth: '60px' }}>
+                            <label>In Stock</label>
+                            <label className="checkbox-inline">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.stock}
+                                    onChange={(e) => setFormData({ ...formData, stock: e.target.checked })}
+                                />
+                            </label>
+                        </div>
+
+                        <div className="form-group" style={{ flex: '1', minWidth: '100px' }}>
                             <label>Image</label>
                             <input
                                 type="file"
@@ -292,27 +316,15 @@ export default function Inventory() {
                                 className="file-input"
                             />
                         </div>
+                    </div>
 
-                        <div className="form-group">
-                            <label>Stock</label>
-                            <label className="checkbox-inline">
-                                <input
-                                    type="checkbox"
-                                    checked={formData.stock}
-                                    onChange={(e) => setFormData({ ...formData, stock: e.target.checked })}
-                                />
-                                <span> In Stock</span>
-                            </label>
-                        </div>
-
-                        <div className="form-actions">
-                            <button onClick={handleCancelForm} className="btn-secondary">
-                                Cancel
-                            </button>
-                            <button onClick={handleAddProduct} className="btn-primary">
-                                {editingProduct ? "Update" : "Add"}
-                            </button>
-                        </div>
+                    <div className="form-actions">
+                        <button onClick={handleCancelForm} className="btn-secondary">
+                            Cancel
+                        </button>
+                        <button onClick={handleAddProduct} className="btn-primary">
+                            {editingProduct ? "Update" : "Add"}
+                        </button>
                     </div>
 
                     {formData.image && (
@@ -331,6 +343,7 @@ export default function Inventory() {
                             <th>Name</th>
                             <th>Category</th>
                             <th>Price</th>
+                            <th>Stock Count</th>
                             <th>Stock Status</th>
                             <th>Actions</th>
                         </tr>
@@ -348,6 +361,11 @@ export default function Inventory() {
                                 <td>{product.name}</td>
                                 <td>{product.category}</td>
                                 <td>₹{product.price}</td>
+                                <td>
+                                    <span className={`stock-count ${product.stockCount === 0 ? 'zero-stock' : ''}`}>
+                                        {product.stockCount !== undefined ? product.stockCount : 'N/A'}
+                                    </span>
+                                </td>
                                 <td>
                                     <button
                                         onClick={() => handleToggleStock(product.id)}
