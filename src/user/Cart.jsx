@@ -67,7 +67,6 @@ export default function Cart() {
         try {
             setLoading(true);
 
-            // Check stock availability before placing order
             for (const item of cart) {
                 const productRef = doc(db, "products", item.id);
                 const productSnap = await getDoc(productRef);
@@ -108,7 +107,6 @@ export default function Cart() {
 
             const docRef = await addDoc(collection(db, "orders"), order);
 
-            // Decrement stock count for each product in the order
             for (const item of cart) {
                 const productRef = doc(db, "products", item.id);
                 const productSnap = await getDoc(productRef);
@@ -120,7 +118,7 @@ export default function Cart() {
 
                     await updateDoc(productRef, {
                         stockCount: newStock,
-                        stock: newStock > 0 
+                        stock: newStock > 0
                     });
                 }
             }
@@ -129,8 +127,7 @@ export default function Cart() {
                 `  • ${item.name} x${item.quantity} - ₹${item.price * item.quantity}`
             ).join("\\n");
 
-            const message = `*New Order #${docRef.id.slice(-6)}*\n` +
-                `*Customer Details*\n` +
+            const message = `*New Order #${docRef.id.slice(-6)}*\n\n` +
                 `Name: ${userDetails.name}\n` +
                 `Phone: ${userDetails.phone}\n` +
                 `Address: ${userDetails.address}\n\n` +
@@ -264,6 +261,87 @@ export default function Cart() {
                         </button>
                     </div>
                 </div>
+
+                {/* UPI Apps Selection Modal */}
+                {showUpiApps && (
+                    <div className="upi-modal-overlay" onClick={() => {
+                        setShowUpiApps(false);
+                        navigate("/orders");
+                    }}>
+                        <div className="upi-modal" onClick={(e) => e.stopPropagation()}>
+                            <h3>Choose Payment App</h3>
+                            <p className="upi-modal-subtitle">Select your preferred UPI app to complete payment</p>
+                            
+                            <div className="upi-apps-grid">
+                                <button 
+                                    className="upi-app-btn"
+                                    onClick={() => {
+                                        window.location.href = `gpay://upi/pay?pa=${UPI_ID}&pn=${encodeURIComponent("Varun Grocery Mart")}&am=${total}&cu=INR`;
+                                        setTimeout(() => {
+                                            setShowUpiApps(false);
+                                            navigate("/orders");
+                                        }, 1000);
+                                    }}
+                                >
+                                    <span className="upi-app-icon">💳</span>
+                                    <span className="upi-app-name">Google Pay</span>
+                                </button>
+
+                                <button 
+                                    className="upi-app-btn"
+                                    onClick={() => {
+                                        window.location.href = `phonepe://pay?pa=${UPI_ID}&pn=${encodeURIComponent("Varun Grocery Mart")}&am=${total}&cu=INR`;
+                                        setTimeout(() => {
+                                            setShowUpiApps(false);
+                                            navigate("/orders");
+                                        }, 1000);
+                                    }}
+                                >
+                                    <span className="upi-app-icon">📱</span>
+                                    <span className="upi-app-name">PhonePe</span>
+                                </button>
+
+                                <button 
+                                    className="upi-app-btn"
+                                    onClick={() => {
+                                        window.location.href = `paytmmp://pay?pa=${UPI_ID}&pn=${encodeURIComponent("Varun Grocery Mart")}&am=${total}&cu=INR`;
+                                        setTimeout(() => {
+                                            setShowUpiApps(false);
+                                            navigate("/orders");
+                                        }, 1000);
+                                    }}
+                                >
+                                    <span className="upi-app-icon">💰</span>
+                                    <span className="upi-app-name">Paytm</span>
+                                </button>
+
+                                <button 
+                                    className="upi-app-btn"
+                                    onClick={() => {
+                                        window.location.href = upiLink;
+                                        setTimeout(() => {
+                                            setShowUpiApps(false);
+                                            navigate("/orders");
+                                        }, 1000);
+                                    }}
+                                >
+                                    <span className="upi-app-icon">🏦</span>
+                                    <span className="upi-app-name">Other UPI Apps</span>
+                                </button>
+                            </div>
+
+                            <button 
+                                className="btn-secondary upi-cancel-btn"
+                                onClick={() => {
+                                    setShowUpiApps(false);
+                                    navigate("/orders");
+                                }}
+                            >
+                                View Orders
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
@@ -336,7 +414,6 @@ export default function Cart() {
                 </div>
             </div>
 
-            {/* UPI Apps Selection Modal */}
             {showUpiApps && (
                 <div className="upi-modal-overlay" onClick={() => {
                     setShowUpiApps(false);
