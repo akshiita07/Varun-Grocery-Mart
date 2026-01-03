@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, addDoc, doc, getDoc, updateDoc, getDocs, query, where } from "firebase/firestore";
+import { collection, addDoc, doc, getDoc, updateDoc, getDocs, query, where, runTransaction, writeBatch } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
@@ -64,33 +64,14 @@ export default function Cart() {
             return;
         }
 
-        // Check stock availability first
-        try {
-            for (const item of cart) {
-                const productRef = doc(db, "products", item.id);
-                const productSnap = await getDoc(productRef);
-
-                if (productSnap.exists()) {
-                    const productData = productSnap.data();
-                    const currentStock = productData.stockCount || 0;
-
-                    if (currentStock < item.quantity) {
-                        alert(`Sorry, only ${currentStock} units of ${item.name} are available in stock.`);
-                        return;
-                    }
-                }
-            }
-
-            // If UPI payment, show modal FIRST before placing order
-            if (paymentMethod === "upi") {
-                setShowUpiApps(true);
-            } else {
-                // For COD, place order directly
-                await placeOrder();
-            }
-        } catch (error) {
-            console.error("Error checking stock:", error);
-            alert("Failed to check product availability. Please try again.");
+        // If UPI payment, show modal FIRST before placing order
+        // Stock check will happen atomically in the transaction when user selects payment app
+        if (paymentMethod === "upi") {
+            setShowUpiApps(true);
+        } else {
+            // For COD, place order directly
+            // Stock check happens atomically in the Firestore transaction
+            await placeOrder();
         }
     };
 
@@ -98,51 +79,84 @@ export default function Cart() {
         try {
             setLoading(true);
 
-            const order = {
-                userId: currentUser.uid,
-                userEmail: currentUser.email,
-                userName: userDetails.name,
-                items: cart.map(item => ({
-                    id: item.id,
-                    name: item.name,
-                    price: item.price,
-                    quantity: item.quantity
-                })),
-                subtotal,
-                platformFee,
-                total,
-                address: userDetails.address,
-                phone: userDetails.phone,
-                paymentMethod,
-                paymentStatus: paymentMethod === "cod" ? "pending" : "awaiting_verification",
-                status: "placed",
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            };
+            // Use Firestore transaction to atomically check and reserve stock
+            // This prevents race conditions when multiple users order the same item
+            const result = await runTransaction(db, async (transaction) => {
+                const stockChecks = [];
+                const productRefs = [];
 
-            if (paymentAppUsed) {
-                order.paymentApp = paymentAppUsed;
-            }
+                // Step 1: Read all product stocks in the transaction
+                for (const item of cart) {
+                    const productRef = doc(db, "products", item.id);
+                    productRefs.push({ ref: productRef, item });
+                    
+                    const productSnap = await transaction.get(productRef);
+                    
+                    if (!productSnap.exists()) {
+                        throw new Error(`Product ${item.name} not found`);
+                    }
 
-            const docRef = await addDoc(collection(db, "orders"), order);
-
-            // Decrement stock
-            for (const item of cart) {
-                const productRef = doc(db, "products", item.id);
-                const productSnap = await getDoc(productRef);
-
-                if (productSnap.exists()) {
                     const productData = productSnap.data();
                     const currentStock = productData.stockCount || 0;
-                    const newStock = Math.max(0, currentStock - item.quantity);
 
-                    await updateDoc(productRef, {
-                        stockCount: newStock,
-                        stock: newStock > 0
+                    // Check if sufficient stock is available
+                    if (currentStock < item.quantity) {
+                        throw new Error(`Sorry! Only ${currentStock} unit(s) of "${item.name}" available. Another customer may have just ordered it.`);
+                    }
+
+                    stockChecks.push({
+                        productRef,
+                        currentStock,
+                        requestedQuantity: item.quantity,
+                        newStock: currentStock - item.quantity
                     });
                 }
-            }
 
+                // Step 2: Create order document
+                const orderData = {
+                    userId: currentUser.uid,
+                    userEmail: currentUser.email,
+                    userName: userDetails.name,
+                    items: cart.map(item => ({
+                        id: item.id,
+                        name: item.name,
+                        price: item.price,
+                        quantity: item.quantity
+                    })),
+                    subtotal,
+                    platformFee,
+                    total,
+                    address: userDetails.address,
+                    phone: userDetails.phone,
+                    paymentMethod,
+                    paymentStatus: paymentMethod === "cod" ? "pending" : "awaiting_verification",
+                    status: "placed",
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+
+                if (paymentAppUsed) {
+                    orderData.paymentApp = paymentAppUsed;
+                }
+
+                const orderRef = doc(collection(db, "orders"));
+                transaction.set(orderRef, orderData);
+
+                // Step 3: Update all product stocks atomically
+                for (const check of stockChecks) {
+                    transaction.update(check.productRef, {
+                        stockCount: check.newStock,
+                        stock: check.newStock > 0
+                    });
+                }
+
+                return { orderId: orderRef.id, orderData };
+            });
+
+            // Transaction succeeded - stock was atomically decremented
+            const { orderId, orderData } = result;
+
+            // Send WhatsApp notification
             const orderDetails = cart.map(item =>
                 `  • ${item.name} x${item.quantity} - ₹${item.price * item.quantity}`
             ).join("\\n");
@@ -151,7 +165,7 @@ export default function Cart() {
                 ? "Cash on Delivery"
                 : `UPI Payment${paymentAppUsed ? ` (${paymentAppUsed})` : ""} (Awaiting Verification)`;
 
-            const message = `🛒 *New Order #${docRef.id.slice(-6)}*\n` +
+            const message = `🛒 *New Order #${orderId.slice(-6)}*\n` +
                 `━━━━━━━━━━━━━━━━━━\n\n` +
                 `👤 *Customer Details*\n` +
                 `Name: ${userDetails.name}\n` +
@@ -167,7 +181,7 @@ export default function Cart() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    orderId: docRef.id,
+                    orderId: orderId,
                     message,
                     total
                 })
@@ -178,7 +192,20 @@ export default function Cart() {
             navigate("/orders");
         } catch (error) {
             console.error("Error placing order:", error);
-            alert("Failed to place order. Please try again.");
+            
+            // Show user-friendly error messages
+            if (error.message && error.message.includes("Only")) {
+                // Stock availability error
+                alert(error.message + "\n\nPlease update your cart and try again.");
+                setShowUpiApps(false);
+                setShowCheckout(false); // Go back to cart to let user adjust quantities
+            } else if (error.message && error.message.includes("not found")) {
+                alert(error.message + "\n\nThis product may have been removed. Please refresh the page.");
+                setShowUpiApps(false);
+            } else {
+                alert("Failed to place order. Please try again.\n\nThis could be due to:\n• Network issues\n• Product availability changed\n• Server is busy");
+                setShowUpiApps(false);
+            }
         } finally {
             setLoading(false);
         }
