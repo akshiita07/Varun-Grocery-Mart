@@ -90,6 +90,11 @@ export default function Home() {
             <div className="home-header">
                 <h1>Welcome to Varun Online Grocery Store</h1>
                 <p>Your neighborhood shop, now online. Open to all Savitry Tower residents.</p>
+                {!currentUser && (
+                    <div className="login-prompt">
+                        <p className="prompt-text">Please login to add items to cart and place orders</p>
+                    </div>
+                )}
             </div>
 
             {products.length === 0 && (

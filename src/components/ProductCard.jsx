@@ -1,10 +1,20 @@
-﻿import { useCart } from "../context/CartContext";
+﻿import { useNavigate } from "react-router-dom";
+import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 import "../index.css";
 
 export default function ProductCard({ product }) {
     const { addToCart } = useCart();
+    const { currentUser } = useAuth();
+    const navigate = useNavigate();
 
     const handleAddToCart = () => {
+        if (!currentUser) {
+            alert("Please login to add items to cart");
+            navigate("/login");
+            return;
+        }
+
         if (product.stock) {
             addToCart(product);
         }
