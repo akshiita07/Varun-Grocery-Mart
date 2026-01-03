@@ -7,6 +7,8 @@ import { useCart } from "../context/CartContext";
 import { API_URL } from "../config";
 import "../index.css";
 
+const UPI_ID = "pathakshita07-1@oksbi";
+
 export default function Cart() {
     const { currentUser } = useAuth();
     const { cart, updateQuantity, removeFromCart, clearCart, getTotal } = useCart();
@@ -47,6 +49,11 @@ export default function Cart() {
             return;
         }
         setShowCheckout(true);
+    };
+
+    const generateUPILink = (orderId) => {
+        const upiLink = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent("Varun Grocery Mart")}&am=${total}&cu=INR&tn=${encodeURIComponent(`Order ${orderId}`)}`;
+        return upiLink;
     };
 
     const placeOrder = async () => {
@@ -91,6 +98,7 @@ export default function Cart() {
                 address: userDetails.address,
                 phone: userDetails.phone,
                 paymentMethod,
+                paymentStatus: paymentMethod === "cod" ? "pending" : "awaiting_verification",
                 status: "placed",
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
@@ -119,14 +127,17 @@ export default function Cart() {
                 `  • ${item.name} x${item.quantity} - ₹${item.price * item.quantity}`
             ).join("\\n");
 
-            const message = `*New Order #${docRef.id.slice(-6)}*` + "\n" +
-                `*Name:* ${userDetails.name}` + "\n" +
-                `*Phone:* ${userDetails.phone}` + "\n" +
-                `*Address:* ${userDetails.address}` + "\n" +
-                `*Order Items*` +
-                `${orderDetails}` + "\n" +
-                `*Total Amount: ₹${total}*` + "\n" +
-                `*Payment:* ${paymentMethod === "cod" ? "Cash on Delivery" : "Online Payment"}`;
+            const message = `🛒 *New Order #${docRef.id.slice(-6)}*\n` +
+                `━━━━━━━━━━━━━━━━━━\n\n` +
+                `👤 *Customer Details*\n` +
+                `Name: ${userDetails.name}\n` +
+                `Phone: ${userDetails.phone}\n` +
+                `Address: ${userDetails.address}\n\n` +
+                `📦 *Order Items*\n` +
+                `${orderDetails}\n\n` +
+                `━━━━━━━━━━━━━━━━━━\n` +
+                `💰 *Total Amount: ₹${total}*\n` +
+                `💳 *Payment:* ${paymentMethod === "cod" ? "Cash on Delivery" : "UPI Payment (Awaiting Verification)"}`;
 
             await fetch(`${API_URL}/notify`, {
                 method: "POST",
@@ -139,7 +150,18 @@ export default function Cart() {
             });
 
             clearCart();
-            navigate("/orders");
+
+            // If UPI, redirect to UPI payment
+            if (paymentMethod === "upi") {
+                const upiLink = generateUPILink(docRef.id.slice(-6));
+                alert("Redirecting to UPI payment...");
+                window.location.href = upiLink;
+                setTimeout(() => {
+                    navigate("/orders");
+                }, 2000);
+            } else {
+                navigate("/orders");
+            }
         } catch (error) {
             console.error("Error placing order:", error);
             alert("Failed to place order. Please try again.");
@@ -216,16 +238,16 @@ export default function Cart() {
                                     checked={paymentMethod === "cod"}
                                     onChange={(e) => setPaymentMethod(e.target.value)}
                                 />
-                                <span>Cash on Delivery</span>
+                                <span>💵 Cash on Delivery</span>
                             </label>
                             <label className="payment-option">
                                 <input
                                     type="radio"
-                                    value="online"
-                                    checked={paymentMethod === "online"}
+                                    value="upi"
+                                    checked={paymentMethod === "upi"}
                                     onChange={(e) => setPaymentMethod(e.target.value)}
                                 />
-                                <span>Online Payment (Razorpay/UPI)</span>
+                                <span>📱 UPI Payment (Google Pay, PhonePe, Paytm)</span>
                             </label>
                         </div>
                     </div>
