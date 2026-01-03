@@ -1603,3 +1603,11 @@ body {
     color: #bdc3c7;
     cursor: not-allowed;
 }
+
+.auth-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: 1rem;
+}
