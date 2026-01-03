@@ -16,6 +16,8 @@ export default function Cart() {
     const [showCheckout, setShowCheckout] = useState(false);
     const [loading, setLoading] = useState(false);
     const [userDetails, setUserDetails] = useState(null);
+    const [showUpiApps, setShowUpiApps] = useState(false);
+    const [upiLink, setUpiLink] = useState("");
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -118,7 +120,7 @@ export default function Cart() {
 
                     await updateDoc(productRef, {
                         stockCount: newStock,
-                        stock: newStock > 0 // Auto-update stock status
+                        stock: newStock > 0 
                     });
                 }
             }
@@ -127,17 +129,15 @@ export default function Cart() {
                 `  • ${item.name} x${item.quantity} - ₹${item.price * item.quantity}`
             ).join("\\n");
 
-            const message = `🛒 *New Order #${docRef.id.slice(-6)}*\n` +
-                `━━━━━━━━━━━━━━━━━━\n\n` +
-                `👤 *Customer Details*\n` +
+            const message = `*New Order #${docRef.id.slice(-6)}*\n` +
+                `*Customer Details*\n` +
                 `Name: ${userDetails.name}\n` +
                 `Phone: ${userDetails.phone}\n` +
                 `Address: ${userDetails.address}\n\n` +
-                `📦 *Order Items*\n` +
+                `*Order Items*\n` +
                 `${orderDetails}\n\n` +
-                `━━━━━━━━━━━━━━━━━━\n` +
-                `💰 *Total Amount: ₹${total}*\n` +
-                `💳 *Payment:* ${paymentMethod === "cod" ? "Cash on Delivery" : "UPI Payment (Awaiting Verification)"}`;
+                `*Total Amount: ₹${total}*\n` +
+                `*Payment:* ${paymentMethod === "cod" ? "Cash on Delivery" : "UPI Payment (Awaiting Verification)"}`;
 
             await fetch(`${API_URL}/notify`, {
                 method: "POST",
@@ -151,14 +151,10 @@ export default function Cart() {
 
             clearCart();
 
-            // If UPI, redirect to UPI payment
             if (paymentMethod === "upi") {
-                const upiLink = generateUPILink(docRef.id.slice(-6));
-                alert("Redirecting to UPI payment...");
-                window.location.href = upiLink;
-                setTimeout(() => {
-                    navigate("/orders");
-                }, 2000);
+                const link = generateUPILink(docRef.id.slice(-6));
+                setUpiLink(link);
+                setShowUpiApps(true);
             } else {
                 navigate("/orders");
             }
@@ -339,6 +335,87 @@ export default function Cart() {
                     </button>
                 </div>
             </div>
+
+            {/* UPI Apps Selection Modal */}
+            {showUpiApps && (
+                <div className="upi-modal-overlay" onClick={() => {
+                    setShowUpiApps(false);
+                    navigate("/orders");
+                }}>
+                    <div className="upi-modal" onClick={(e) => e.stopPropagation()}>
+                        <h3>Choose Payment App</h3>
+                        <p className="upi-modal-subtitle">Select your preferred UPI app to complete payment</p>
+
+                        <div className="upi-apps-grid">
+                            <button
+                                className="upi-app-btn"
+                                onClick={() => {
+                                    window.location.href = `gpay://upi/pay?pa=${UPI_ID}&pn=${encodeURIComponent("Varun Grocery Mart")}&am=${total}&cu=INR`;
+                                    setTimeout(() => {
+                                        setShowUpiApps(false);
+                                        navigate("/orders");
+                                    }, 1000);
+                                }}
+                            >
+                                <span className="upi-app-icon">💳</span>
+                                <span className="upi-app-name">Google Pay</span>
+                            </button>
+
+                            <button
+                                className="upi-app-btn"
+                                onClick={() => {
+                                    window.location.href = `phonepe://pay?pa=${UPI_ID}&pn=${encodeURIComponent("Varun Grocery Mart")}&am=${total}&cu=INR`;
+                                    setTimeout(() => {
+                                        setShowUpiApps(false);
+                                        navigate("/orders");
+                                    }, 1000);
+                                }}
+                            >
+                                <span className="upi-app-icon">📱</span>
+                                <span className="upi-app-name">PhonePe</span>
+                            </button>
+
+                            <button
+                                className="upi-app-btn"
+                                onClick={() => {
+                                    window.location.href = `paytmmp://pay?pa=${UPI_ID}&pn=${encodeURIComponent("Varun Grocery Mart")}&am=${total}&cu=INR`;
+                                    setTimeout(() => {
+                                        setShowUpiApps(false);
+                                        navigate("/orders");
+                                    }, 1000);
+                                }}
+                            >
+                                <span className="upi-app-icon">💰</span>
+                                <span className="upi-app-name">Paytm</span>
+                            </button>
+
+                            <button
+                                className="upi-app-btn"
+                                onClick={() => {
+                                    window.location.href = upiLink;
+                                    setTimeout(() => {
+                                        setShowUpiApps(false);
+                                        navigate("/orders");
+                                    }, 1000);
+                                }}
+                            >
+                                <span className="upi-app-icon">🏦</span>
+                                <span className="upi-app-name">Other UPI Apps</span>
+                            </button>
+                        </div>
+
+                        <button
+                            className="btn-secondary upi-cancel-btn"
+                            onClick={() => {
+                                setShowUpiApps(false);
+                                navigate("/orders");
+                            }}
+                        >
+                            View Orders
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
