@@ -11,6 +11,8 @@ import Dashboard from "./admin/Dashboard";
 import Inventory from "./admin/Inventory";
 import Analytics from "./admin/Analytics";
 import Navbar from "./components/Navbar";
+import FloatingCartFooter from "./components/FloatingCartFooter";
+import ScrollToTop from "./components/ScrollToTop";
 import "./index.css";
 function HomePage() {
     const { userRole, loading } = useAuth();
@@ -29,6 +31,7 @@ function HomePage() {
 export default function App() {
     return (
         <BrowserRouter>
+            <ScrollToTop />
             <AuthProvider>
                 <CartProvider>
                     <Navbar />
@@ -47,6 +50,7 @@ export default function App() {
 
                         <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
+                    <FloatingCartFooter />
                 </CartProvider>
             </AuthProvider>
         </BrowserRouter>
