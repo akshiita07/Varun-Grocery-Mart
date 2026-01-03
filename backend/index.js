@@ -1,6 +1,7 @@
 ﻿import express from "express";
 import cors from "cors";
 import twilio from "twilio";
+import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -14,10 +15,26 @@ app.use(express.json());
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const TWILIO_WHATSAPP_FROM = process.env.TWILIO_WHATSAPP_FROM;
-const TWILIO_PHONE_FROM = process.env.TWILIO_PHONE_FROM;
 const SHOPKEEPER_PHONE = process.env.SHOPKEEPER_PHONE;
 
+const SMTP_HOST = process.env.SMTP_HOST;
+const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
+const SMTP_SECURE = process.env.SMTP_SECURE === "true"; // true for port 465
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
+const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER;
+
 const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+
+const mailer = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_SECURE,
+    auth: {
+        user: SMTP_USER,
+        pass: SMTP_PASS
+    }
+});
 
 const otpStore = new Map();
 
@@ -35,63 +52,71 @@ setInterval(() => {
 
 app.post("/send-otp", async (req, res) => {
     try {
-        const { phoneNumber } = req.body;
+        const { email } = req.body;
 
-        if (!phoneNumber || phoneNumber.length !== 10) {
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             return res.status(400).json({
                 success: false,
-                message: "Invalid phone number. Please enter a valid 10-digit number."
+                message: "Invalid email address. Please enter a valid email."
+            });
+        }
+
+        if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
+            return res.status(500).json({
+                success: false,
+                message: "Email service is not configured on the server."
             });
         }
 
         const otp = generateOTP();
-        const phone = "whatsapp:+91" + phoneNumber;
         const expiryTime = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-        otpStore.set(phoneNumber, {
+        otpStore.set(email, {
             otp,
-            phoneNumber,
+            email,
             createdAt: Date.now(),
             expiry: expiryTime,
             attempts: 0
         });
 
-        const twilioMessage = await client.messages.create({
-            from: TWILIO_WHATSAPP_FROM,
-            to: phone,
-            body: `*Varun Grocery Mart*\nYour verification code is: *${otp}*\nThis code will expire in 10 minutes.\nDo not share this code with anyone.`
+        await mailer.sendMail({
+            from: SMTP_FROM,
+            to: email,
+            subject: "Your Varun Grocery Mart Verification Code",
+            text: `Your verification code is ${otp}. It will expire in 10 minutes. Do not share this code with anyone.`,
+            html: `<p><strong>Your verification code:</strong> <span style="font-size:20px;">${otp}</span></p><p>This code will expire in 10 minutes.</p><p>Do not share this code with anyone.</p>`
         });
 
-        console.log(`OTP sent to ${phone} - SID: ${twilioMessage.sid}, OTP: ${otp}`);
+        console.log(`OTP sent via Email to ${email} - OTP: ${otp}`);
 
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
-            message: "OTP sent successfully via WhatsApp",
-            messageSid: twilioMessage.sid
+            message: "OTP sent successfully via Email",
+            channel: "email"
         });
     } catch (error) {
         console.error("Error sending OTP:", error);
         res.status(500).json({
             success: false,
-            message: "Failed to send OTP. Please try again.",
-            error: error.message
+            message: error?.message || "Failed to send OTP. Please try again.",
+            error: error?.message
         });
     }
 });
 
 app.post("/verify-otp", async (req, res) => {
     try {
-        const { phoneNumber, otp } = req.body;
+        const { email, otp } = req.body;
 
-        if (!phoneNumber || !otp) {
+        if (!email || !otp) {
             return res.status(400).json({
                 success: false,
-                message: "Phone number and OTP are required"
+                message: "Email and OTP are required"
             });
         }
 
         // Get OTP from memory
-        const otpData = otpStore.get(phoneNumber);
+        const otpData = otpStore.get(email);
 
         if (!otpData) {
             return res.status(400).json({
@@ -101,7 +126,7 @@ app.post("/verify-otp", async (req, res) => {
         }
 
         if (Date.now() > otpData.expiry) {
-            otpStore.delete(phoneNumber);
+            otpStore.delete(email);
             return res.status(400).json({
                 success: false,
                 message: "OTP has expired. Please request a new OTP."
@@ -115,13 +140,13 @@ app.post("/verify-otp", async (req, res) => {
             });
         }
 
-        otpStore.delete(phoneNumber);
+        otpStore.delete(email);
 
-        console.log(`Phone ${phoneNumber} verified successfully`);
+        console.log(`Email ${email} verified successfully`);
 
         res.status(200).json({
             success: true,
-            message: "Phone number verified successfully",
+            message: "Email verified successfully",
             verified: true
         });
     } catch (error) {
@@ -169,7 +194,7 @@ app.post("/notify", async (req, res) => {
 app.get("/", (req, res) => {
     res.json({
         status: "running",
-        message: "QuickGrocery Backend API",
+        message: "Varun Grocery Store Backend API",
         endpoints: [
             { method: "POST", path: "/send-otp", description: "Send OTP to phone number" },
             { method: "POST", path: "/verify-otp", description: "Verify OTP" },

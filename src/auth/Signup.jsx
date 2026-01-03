@@ -37,11 +37,6 @@ export default function Signup() {
             return;
         }
 
-        if (phone.length !== 10 || isNaN(phone)) {
-            setError("Please enter a valid 10-digit phone number");
-            return;
-        }
-
         if (!validateEmail(email)) {
             setError("Please enter a valid email address");
             return;
@@ -60,11 +55,10 @@ export default function Signup() {
         try {
             setLoading(true);
 
-            // Send OTP to phone number
             const response = await fetch(`${API_URL}/send-otp`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ phoneNumber: phone })
+                body: JSON.stringify({ email })
             });
 
             const text = await response.text();
@@ -108,7 +102,7 @@ export default function Signup() {
             const response = await fetch(`${API_URL}/verify-otp`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ phoneNumber: phone, otp })
+                body: JSON.stringify({ email, otp })
             });
 
             const text = await response.text();
@@ -128,7 +122,7 @@ export default function Signup() {
             setPhoneVerified(true);
             setError("");
 
-            // Create account with verified phone
+            // Create account after verifying email OTP
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
             await setDoc(doc(db, "users", userCredential.user.uid), {
@@ -162,7 +156,7 @@ export default function Signup() {
             const response = await fetch(`${API_URL}/send-otp`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ phoneNumber: phone })
+                body: JSON.stringify({ email })
             });
 
             const text = await response.text();
@@ -227,10 +221,10 @@ export default function Signup() {
                             <div className="form-group">
                                 <input
                                     type="tel"
-                                    placeholder="Phone Number (10 digits)"
+                                    placeholder="Phone Number"
                                     value={phone}
                                     onChange={e => setPhone(e.target.value)}
-                                    maxLength="10"
+                                    maxLength="15"
                                     required
                                 />
                             </div>
@@ -290,12 +284,12 @@ export default function Signup() {
                     </>
                 ) : (
                     <>
-                        <h2>Verify Phone Number</h2>
+                        <h2>Verify Email</h2>
                         {error && <div className="error-message">{error}</div>}
 
                         <div className="otp-info">
-                            <p>We've sent a 6-digit verification code via WhatsApp to:</p>
-                            <p className="phone-display">+91 {phone}</p>
+                            <p>We've sent a 6-digit verification code to your email:</p>
+                            <p className="phone-display">{email}</p>
                         </div>
 
                         <form onSubmit={handleVerifyOTP}>
@@ -320,7 +314,7 @@ export default function Signup() {
                                 Resend OTP
                             </button>
                             <button onClick={handleBackToForm} className="btn-link">
-                                Change Phone Number
+                                Change Email
                             </button>
                         </div>
                     </>
