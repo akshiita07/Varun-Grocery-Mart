@@ -1,0 +1,25 @@
+{
+  "name": "varungroceryapp-backend",
+  "version": "1.0.0",
+  "description": "Backend API for QuickGrocery App",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "keywords": [
+    "grocery",
+    "backend",
+    "api",
+    "whatsapp"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.18.2",
+    "twilio": "^5.11.1"
+  }
+}
