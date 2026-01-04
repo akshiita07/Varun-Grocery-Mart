@@ -1,10 +1,12 @@
 ﻿import { useCart } from "../context/CartContext";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
 import "../index.css";
 
 export default function FloatingCartFooter() {
     const { cart, getTotal } = useCart();
+    const { userRole } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [isVisible, setIsVisible] = useState(false);
@@ -14,7 +16,7 @@ export default function FloatingCartFooter() {
     const total = getTotal() + platformFee;
 
     const hideOnPages = ["/cart", "/orders", "/login", "/signup"];
-    const shouldHide = hideOnPages.includes(location.pathname) || cart.length === 0;
+    const shouldHide = hideOnPages.includes(location.pathname) || cart.length === 0 || userRole === "admin";
 
     useEffect(() => {
         if (cart.length > 0) {
