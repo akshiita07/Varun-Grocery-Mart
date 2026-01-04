@@ -1,7 +1,7 @@
 ﻿import express from "express";
 import cors from "cors";
 import twilio from "twilio";
-import nodemailer from "nodemailer";
+import sgMail from "@sendgrid/mail";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -17,24 +17,14 @@ const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const TWILIO_WHATSAPP_FROM = process.env.TWILIO_WHATSAPP_FROM;
 const SHOPKEEPER_PHONE = process.env.SHOPKEEPER_PHONE;
 
-const SMTP_HOST = process.env.SMTP_HOST;
-const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
-const SMTP_SECURE = process.env.SMTP_SECURE === "true"; // true for port 465
-const SMTP_USER = process.env.SMTP_USER;
-const SMTP_PASS = process.env.SMTP_PASS;
-const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER;
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+const SMTP_FROM = process.env.SMTP_FROM;
 
 const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
-const mailer = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: SMTP_SECURE,
-    auth: {
-        user: SMTP_USER,
-        pass: SMTP_PASS
-    }
-});
+if (SENDGRID_API_KEY) {
+    sgMail.setApiKey(SENDGRID_API_KEY);
+}
 
 const otpStore = new Map();
 
@@ -61,7 +51,7 @@ app.post("/send-otp", async (req, res) => {
             });
         }
 
-        if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
+        if (!SENDGRID_API_KEY) {
             return res.status(500).json({
                 success: false,
                 message: "Email service is not configured on the server."
@@ -79,7 +69,7 @@ app.post("/send-otp", async (req, res) => {
             attempts: 0
         });
 
-        await mailer.sendMail({
+        await sgMail.send({
             from: SMTP_FROM,
             to: email,
             subject: "Your Varun Grocery Mart Verification Code",
@@ -206,7 +196,7 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
     console.log(`\n========================================`);
     console.log(`Backend server running on http://localhost:${PORT}`);
-    console.log(`WhatsApp notifications: ${SHOPKEEPER_PHONE}`);
+    console.log(`WhatsApp notifications to shopkeeper: ${SHOPKEEPER_PHONE}`);
     console.log(`========================================\n`);
 });
 

@@ -42,7 +42,6 @@ export default function Cart() {
 
     const handleCheckout = () => {
         if (!currentUser) {
-            alert("Please login to place order");
             navigate("/login");
             return;
         }
@@ -89,9 +88,9 @@ export default function Cart() {
                 for (const item of cart) {
                     const productRef = doc(db, "products", item.id);
                     productRefs.push({ ref: productRef, item });
-                    
+
                     const productSnap = await transaction.get(productRef);
-                    
+
                     if (!productSnap.exists()) {
                         throw new Error(`Product ${item.name} not found`);
                     }
@@ -192,7 +191,7 @@ export default function Cart() {
             navigate("/orders");
         } catch (error) {
             console.error("Error placing order:", error);
-            
+
             // Show user-friendly error messages
             if (error.message && error.message.includes("Only")) {
                 // Stock availability error
