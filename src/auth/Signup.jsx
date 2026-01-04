@@ -290,6 +290,9 @@ export default function Signup() {
                         <div className="otp-info">
                             <p>We've sent a 6-digit verification code to your email:</p>
                             <p className="phone-display">{email}</p>
+                            <p style={{ fontSize: '0.9em', color: '#666', marginTop: '10px' }}>
+                                💡 Tip: Check your spam/junk folder if you don't see it in inbox
+                            </p>
                         </div>
 
                         <form onSubmit={handleVerifyOTP}>

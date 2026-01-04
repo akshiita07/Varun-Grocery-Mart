@@ -3,20 +3,27 @@ import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import { useState } from "react";
 import "../index.css";
 
 export default function Navbar() {
     const { currentUser, userRole } = useAuth();
     const { getItemCount } = useCart();
     const navigate = useNavigate();
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const handleLogout = async () => {
         try {
             await signOut(auth);
             navigate("/login");
+            setMobileMenuOpen(false);
         } catch (error) {
             console.error("Logout failed:", error);
         }
+    };
+
+    const closeMobileMenu = () => {
+        setMobileMenuOpen(false);
     };
 
     return (
@@ -26,7 +33,18 @@ export default function Navbar() {
                     Varun Grocery Store
                 </Link>
 
-                <div className="navbar-menu">
+                {/* Hamburger Icon */}
+                <button
+                    className="hamburger-menu"
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    aria-label="Toggle menu"
+                >
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+
+                <div className={`navbar-menu ${mobileMenuOpen ? 'mobile-open' : ''}`}>
                     {currentUser ? (
                         <>
                             {userRole === "admin" ? (
@@ -40,14 +58,14 @@ export default function Navbar() {
                                 </>
                             ) : (
                                 <>
-                                    <Link to="/" className="nav-link">Home</Link>
-                                    <Link to="/orders" className="nav-link">Orders</Link>
-                                    <Link to="/cart" className="nav-link cart-link">
+                                    <Link to="/" className="nav-link" onClick={closeMobileMenu}>Home</Link>
+                                    <Link to="/orders" className="nav-link" onClick={closeMobileMenu}>Orders</Link>
+                                    <Link to="/cart" className="nav-link cart-link" onClick={closeMobileMenu}>
                                         🛒 Cart {getItemCount() > 0 && (
                                             <span className="cart-badge">{getItemCount()}</span>
                                         )}
                                     </Link>
-                                    <Link to="/profile" className="nav-link">Profile</Link>
+                                    <Link to="/profile" className="nav-link" onClick={closeMobileMenu}>Profile</Link>
                                     <button onClick={handleLogout} className="btn-logout">
                                         Logout
                                     </button>
@@ -56,8 +74,8 @@ export default function Navbar() {
                         </>
                     ) : (
                         <>
-                            <Link to="/login" className="nav-link">Login</Link>
-                            <Link to="/signup" className="btn-signup">Sign Up</Link>
+                            <Link to="/login" className="nav-link" onClick={closeMobileMenu}>Login</Link>
+                            <Link to="/signup" className="btn-signup" onClick={closeMobileMenu}>Sign Up</Link>
                         </>
                     )}
                 </div>
