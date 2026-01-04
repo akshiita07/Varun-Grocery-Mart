@@ -3,7 +3,7 @@ import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import "../index.css";
 
 export default function Navbar() {
@@ -11,6 +11,27 @@ export default function Navbar() {
     const { getItemCount } = useCart();
     const navigate = useNavigate();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const menuRef = useRef(null);
+    const hamburgerRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                mobileMenuOpen &&
+                menuRef.current &&
+                hamburgerRef.current &&
+                !menuRef.current.contains(event.target) &&
+                !hamburgerRef.current.contains(event.target)
+            ) {
+                setMobileMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [mobileMenuOpen]);
 
     const handleLogout = async () => {
         try {
@@ -35,6 +56,7 @@ export default function Navbar() {
 
                 {/* Hamburger Icon */}
                 <button
+                    ref={hamburgerRef}
                     className="hamburger-menu"
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                     aria-label="Toggle menu"
@@ -44,7 +66,7 @@ export default function Navbar() {
                     <span></span>
                 </button>
 
-                <div className={`navbar-menu ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+                <div ref={menuRef} className={`navbar-menu ${mobileMenuOpen ? 'mobile-open' : ''}`}>
                     {currentUser ? (
                         <>
                             {userRole === "admin" ? (
