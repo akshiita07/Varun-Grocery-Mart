@@ -3,6 +3,7 @@ import { auth, db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useCart } from "../context/CartContext";
 import "../index.css";
 
 export default function Login() {
@@ -15,6 +16,7 @@ export default function Login() {
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const [resetEmail, setResetEmail] = useState("");
     const navigate = useNavigate();
+    const { clearCart } = useCart();
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -28,6 +30,10 @@ export default function Login() {
             setError("");
             setLoading(true);
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+            // Clear any old cart data from before login
+            clearCart();
+            localStorage.removeItem("cart");
 
             const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
             if (userDoc.exists()) {

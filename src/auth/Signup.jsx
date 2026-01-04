@@ -3,6 +3,7 @@ import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useCart } from "../context/CartContext";
 import { API_URL } from "../config";
 import "../index.css";
 
@@ -24,6 +25,7 @@ export default function Signup() {
     const [otpSent, setOtpSent] = useState(false);
     const [phoneVerified, setPhoneVerified] = useState(false);
     const navigate = useNavigate();
+    const { clearCart } = useCart();
 
     // Scroll to top when error occurs
     useEffect(() => {
@@ -181,6 +183,10 @@ export default function Signup() {
 
             // Clear saved form data after successful signup
             sessionStorage.removeItem(SIGNUP_STORAGE_KEY);
+            // Clear any old cart data from before signup
+            clearCart();
+            // Clear localStorage cart to ensure fresh start
+            localStorage.removeItem("cart");
             navigate("/");
         } catch (err) {
             if (err.code === "auth/email-already-in-use") {
