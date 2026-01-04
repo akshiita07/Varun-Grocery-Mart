@@ -37,7 +37,8 @@ export default function Cart() {
     }, [currentUser]);
 
     const subtotal = getTotal();
-    const platformFee = subtotal > 0 ? 5 : 0;
+    // const platformFee = subtotal > 0 ? 5 : 0; // Delivery charge - will enable later
+    const platformFee = 0; // No delivery charges for now
     const total = subtotal + platformFee;
 
     const handleCheckout = () => {
