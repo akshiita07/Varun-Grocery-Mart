@@ -14,6 +14,37 @@ import Navbar from "./components/Navbar";
 import FloatingCartFooter from "./components/FloatingCartFooter";
 import ScrollToTop from "./components/ScrollToTop";
 import "./index.css";
+
+// Protected route for regular users only
+function UserRoute({ children }) {
+    const { userRole, loading } = useAuth();
+
+    if (loading) {
+        return <div className="loading">Loading...</div>;
+    }
+
+    if (userRole === "admin") {
+        return <Navigate to="/admin" replace />;
+    }
+
+    return children;
+}
+
+// Protected route for admin only
+function AdminRoute({ children }) {
+    const { userRole, loading } = useAuth();
+
+    if (loading) {
+        return <div className="loading">Loading...</div>;
+    }
+
+    if (userRole !== "admin") {
+        return <Navigate to="/" replace />;
+    }
+
+    return children;
+}
+
 function HomePage() {
     const { userRole, loading } = useAuth();
 
@@ -40,13 +71,15 @@ export default function App() {
                         <Route path="/signup" element={<Signup />} />
                         <Route path="/login" element={<Login />} />
 
-                        <Route path="/cart" element={<Cart />} />
-                        <Route path="/orders" element={<Orders />} />
-                        <Route path="/profile" element={<Profile />} />
+                        {/* User-only routes */}
+                        <Route path="/cart" element={<UserRoute><Cart /></UserRoute>} />
+                        <Route path="/orders" element={<UserRoute><Orders /></UserRoute>} />
+                        <Route path="/profile" element={<UserRoute><Profile /></UserRoute>} />
 
-                        <Route path="/admin" element={<Dashboard />} />
-                        <Route path="/admin/inventory" element={<Inventory />} />
-                        <Route path="/admin/analytics" element={<Analytics />} />
+                        {/* Admin-only routes */}
+                        <Route path="/admin" element={<AdminRoute><Dashboard /></AdminRoute>} />
+                        <Route path="/admin/inventory" element={<AdminRoute><Inventory /></AdminRoute>} />
+                        <Route path="/admin/analytics" element={<AdminRoute><Analytics /></AdminRoute>} />
 
                         <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
