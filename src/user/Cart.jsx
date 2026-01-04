@@ -158,23 +158,20 @@ export default function Cart() {
             // Send WhatsApp notification
             const orderDetails = cart.map(item =>
                 `  • ${item.name} x${item.quantity} - ₹${item.price * item.quantity}`
-            ).join("\\n");
+            ).join("\n");
 
             const paymentInfo = paymentMethod === "cod"
                 ? "Cash on Delivery"
                 : `UPI Payment${paymentAppUsed ? ` (${paymentAppUsed})` : ""} (Awaiting Verification)`;
 
-            const message = `🛒 *New Order #${orderId.slice(-6)}*\n` +
-                `━━━━━━━━━━━━━━━━━━\n\n` +
-                `👤 *Customer Details*\n` +
+            const message = `New Order #${orderId.slice(-6)}\n` +
                 `Name: ${userDetails.name}\n` +
                 `Phone: ${userDetails.phone}\n` +
                 `Address: ${userDetails.address}\n\n` +
-                `📦 *Order Items*\n` +
+                `Order Items\n` +
                 `${orderDetails}\n\n` +
-                `━━━━━━━━━━━━━━━━━━\n` +
-                `💰 *Total Amount: ₹${total}*\n` +
-                `💳 *Payment:* ${paymentInfo}`;
+                `Total Amount: ₹${total}\n` +
+                `Payment: ${paymentInfo}`;
 
             await fetch(`${API_URL}/notify`, {
                 method: "POST",
