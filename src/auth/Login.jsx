@@ -136,13 +136,16 @@ export default function Login() {
                         </form>
 
                         <div className="auth-links">
-                            <button
-                                onClick={() => setShowForgotPassword(true)}
-                                className="btn-link"
-                                style={{ marginTop: '1rem' }}
+                            <a
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    setShowForgotPassword(true);
+                                }}
+                                id="btn-link-forgot"
                             >
                                 Forgot Password?
-                            </button>
+                            </a>
                             <p className="auth-link">
                                 Don't have an account? <Link to="/signup">Sign up</Link>
                             </p>
@@ -175,9 +178,16 @@ export default function Login() {
                         </form>
 
                         <div className="otp-actions">
-                            <button onClick={handleBackToLogin} className="btn-link">
+                            <a
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    handleBackToLogin();
+                                }}
+                                className="btn-link"
+                            >
                                 Back to Login
-                            </button>
+                            </a>
                         </div>
                     </>
                 )}

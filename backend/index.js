@@ -15,6 +15,7 @@ app.use(express.json());
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const TWILIO_WHATSAPP_FROM = process.env.TWILIO_WHATSAPP_FROM;
+const TWILIO_PHONE_FROM = process.env.TWILIO_PHONE_FROM;
 const SHOPKEEPER_PHONE = process.env.SHOPKEEPER_PHONE;
 
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
@@ -153,29 +154,39 @@ app.post("/notify", async (req, res) => {
     try {
         const { orderId, message, total } = req.body;
 
-        const twilioMessage = await client.messages.create({
-            from: TWILIO_WHATSAPP_FROM,
-            to: SHOPKEEPER_PHONE,
-            body: message
-        });
+        // Send email notification to shopkeeper
+        if (SENDGRID_API_KEY && process.env.SHOPKEEPER_EMAIL) {
+            await sgMail.send({
+                from: SMTP_FROM,
+                to: process.env.SHOPKEEPER_EMAIL,
+                subject: `New Order #${orderId.slice(-6)} - ₹${total}`,
+                text: message,
+                html: message.replace(/\n/g, '<br>')
+            });
 
-        console.log("\n========== NEW ORDER ==========");
-        console.log("Order ID:", orderId);
-        console.log("Total Amount: ₹", total);
-        console.log("Twilio Message SID:", twilioMessage.sid);
-        console.log("Message Status:", twilioMessage.status);
-        console.log("================================\n");
+            console.log("\n========== NEW ORDER ==========");
+            console.log("Order ID:", orderId);
+            console.log("Total Amount: ₹", total);
+            console.log("Email sent to:", process.env.SHOPKEEPER_EMAIL);
+            console.log("================================\n");
 
-        res.status(200).json({
-            success: true,
-            message: "WhatsApp notification sent successfully",
-            messageSid: twilioMessage.sid
+            return res.status(200).json({
+                success: true,
+                message: "Email notification sent successfully"
+            });
+        }
+
+        // Error if email not configured
+        res.status(400).json({
+            success: false,
+            message: "Email not configured. Set SHOPKEEPER_EMAIL environment variable.",
+            error: "Missing SHOPKEEPER_EMAIL"
         });
     } catch (error) {
-        console.error("Error sending WhatsApp notification:", error);
+        console.error("Error sending notification:", error);
         res.status(500).json({
             success: false,
-            message: "Failed to send WhatsApp notification",
+            message: "Failed to send notification",
             error: error.message
         });
     }

@@ -279,6 +279,14 @@ body {
     color: #555;
 }
 
+.auth-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: 1rem;
+}
+
 .auth-link a {
     color: #3498db;
     text-decoration: none;
@@ -1637,6 +1645,54 @@ body {
         margin-bottom: 1rem;
     }
 
+    #btn-link-forgot {
+        color: #3498db;
+        cursor: pointer;
+        font-size: 0.95rem;
+        text-decoration: underline;
+        padding: 0.5rem 0;
+        margin: 0;
+        display: inline;
+        font-family: inherit;
+        transition: color 0.3s;
+        background: none;
+        border: none;
+    }
+
+    #btn-link-forgot:hover {
+        color: #2980b9;
+        text-decoration: underline;
+    }
+
+    #btn-link-forgot:focus {
+        outline: 2px solid #3498db;
+        outline-offset: 2px;
+    }
+
+    .btn-link {
+        color: #3498db;
+        cursor: pointer;
+        font-size: 0.95rem;
+        text-decoration: underline;
+        padding: 0.5rem 0;
+        margin: 0;
+        display: inline;
+        font-family: inherit;
+        transition: color 0.3s;
+        background: none;
+        border: none;
+    }
+
+    .btn-link:hover {
+        color: #2980b9;
+        text-decoration: underline;
+    }
+
+    .btn-link:focus {
+        outline: 2px solid #3498db;
+        outline-offset: 2px;
+    }
+
     @media (max-width: 768px) {
         .profile-tabs {
             flex-direction: column;
@@ -1678,36 +1734,8 @@ body {
         display: flex;
         gap: 1rem;
         margin-top: 1.5rem;
-        justify-content: center;
+        justify-content: center !important;
         flex-wrap: wrap;
-    }
-
-    .btn-link {
-        background: none;
-        border: none;
-        color: #3498db;
-        cursor: pointer;
-        font-size: 0.95rem;
-        text-decoration: underline;
-        padding: 0.5rem;
-        transition: color 0.3s;
-    }
-
-    .btn-link:hover {
-        color: #2980b9;
-    }
-
-    .btn-link:disabled {
-        color: #bdc3c7;
-        cursor: not-allowed;
-    }
-
-    .auth-links {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        align-items: center;
-        margin-top: 1rem;
     }
 
     /* UPI Payment Styles */
