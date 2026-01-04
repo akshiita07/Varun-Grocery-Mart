@@ -1,10 +1,12 @@
 ﻿import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { API_URL } from "../config";
 import "../index.css";
+
+const SIGNUP_STORAGE_KEY = "signup_form_data";
 
 export default function Signup() {
     const [step, setStep] = useState(1); // Step 1: Enter details, Step 2: Verify OTP
@@ -22,6 +24,41 @@ export default function Signup() {
     const [otpSent, setOtpSent] = useState(false);
     const [phoneVerified, setPhoneVerified] = useState(false);
     const navigate = useNavigate();
+
+    // Load saved form data on component mount
+    useEffect(() => {
+        const savedData = sessionStorage.getItem(SIGNUP_STORAGE_KEY);
+        if (savedData) {
+            try {
+                const data = JSON.parse(savedData);
+                setName(data.name);
+                setEmail(data.email);
+                setPhone(data.phone);
+                setAddress(data.address);
+                setPassword(data.password);
+                setConfirmPassword(data.confirmPassword);
+                setStep(data.step);
+                setOtpSent(data.otpSent);
+            } catch (e) {
+                console.log("Could not restore form data");
+            }
+        }
+    }, []);
+
+    // Save form data to sessionStorage whenever it changes
+    useEffect(() => {
+        const formData = {
+            name,
+            email,
+            phone,
+            address,
+            password,
+            confirmPassword,
+            step,
+            otpSent
+        };
+        sessionStorage.setItem(SIGNUP_STORAGE_KEY, JSON.stringify(formData));
+    }, [name, email, phone, address, password, confirmPassword, step, otpSent]);
 
     const validateEmail = (email) => {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -135,6 +172,8 @@ export default function Signup() {
                 createdAt: new Date().toISOString()
             });
 
+            // Clear saved form data after successful signup
+            sessionStorage.removeItem(SIGNUP_STORAGE_KEY);
             navigate("/");
         } catch (err) {
             if (err.code === "auth/email-already-in-use") {
