@@ -12,7 +12,8 @@ export default function FloatingCartFooter() {
     const [isVisible, setIsVisible] = useState(false);
     const [showAnimation, setShowAnimation] = useState(false);
 
-    const platformFee = getTotal() > 0 ? 5 : 0;
+    // const platformFee = getTotal() > 0 ? 5 : 0; // Delivery charge - disabled for now
+    const platformFee = 0; // No delivery charges
     const total = getTotal() + platformFee;
 
     const hideOnPages = ["/cart", "/orders", "/login", "/signup"];
