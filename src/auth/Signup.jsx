@@ -1,4 +1,4 @@
-﻿import { createUserWithEmailAndPassword } from "firebase/auth";
+﻿import { createUserWithEmailAndPassword, fetchSignInMethodsForEmail } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { useState, useEffect } from "react";
@@ -100,6 +100,14 @@ export default function Signup() {
 
         try {
             setLoading(true);
+
+            // Check if email is already registered; if yes, block OTP send and ask user to login/reset password
+            const existingMethods = await fetchSignInMethodsForEmail(auth, email);
+            if (existingMethods && existingMethods.length > 0) {
+                setError("Email already in use. Please login or reset your password.");
+                setLoading(false);
+                return;
+            }
 
             const response = await fetch(`${API_URL}/send-otp`, {
                 method: "POST",
@@ -205,10 +213,18 @@ export default function Signup() {
         try {
             setLoading(true);
 
+            // Prevent resend if the email already exists (protect against duplicate registrations)
+            const existingMethods = await fetchSignInMethodsForEmail(auth, email);
+            if (existingMethods && existingMethods.length > 0) {
+                setError("Email already in use. Please login or reset your password.");
+                setLoading(false);
+                return;
+            }
+
             const response = await fetch(`${API_URL}/send-otp`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email })
+                body: JSON.stringify({ email }),
             });
 
             const text = await response.text();
