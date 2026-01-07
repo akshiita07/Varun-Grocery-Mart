@@ -185,6 +185,7 @@ export default function Login() {
                                     handleBackToLogin();
                                 }}
                                 className="btn-link"
+                                style={{ display: "flex", justifyContent: "center" }}
                             >
                                 Back to Login
                             </a>
