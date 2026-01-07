@@ -18,7 +18,6 @@ export default function Analytics() {
         }
 
         if (userRole !== "admin") {
-            alert("Access denied. Admin only.");
             navigate("/");
             return;
         }

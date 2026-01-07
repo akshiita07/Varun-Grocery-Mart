@@ -16,7 +16,7 @@ export default function FloatingCartFooter() {
     const platformFee = 0; // No delivery charges
     const total = getTotal() + platformFee;
 
-    const hideOnPages = ["/cart", "/orders", "/login", "/signup"];
+    const hideOnPages = ["/cart", "/orders", "/profile", "/login", "/signup"];
     const shouldHide = hideOnPages.includes(location.pathname) || cart.length === 0 || userRole === "admin";
 
     useEffect(() => {

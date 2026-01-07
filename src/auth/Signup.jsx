@@ -1,5 +1,5 @@
 ﻿import { createUserWithEmailAndPassword, fetchSignInMethodsForEmail } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
@@ -101,9 +101,20 @@ export default function Signup() {
         try {
             setLoading(true);
 
-            // Check if email is already registered; if yes, block OTP send and ask user to login/reset password
+            // Check if email is already registered in Firebase Auth
             const existingMethods = await fetchSignInMethodsForEmail(auth, email);
             if (existingMethods && existingMethods.length > 0) {
+                setError("Email already in use. Please login or reset your password.");
+                setLoading(false);
+                return;
+            }
+
+            // Double-check in Firestore users collection as backup
+            const usersRef = collection(db, "users");
+            const q = query(usersRef, where("email", "==", email));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
                 setError("Email already in use. Please login or reset your password.");
                 setLoading(false);
                 return;
@@ -213,9 +224,20 @@ export default function Signup() {
         try {
             setLoading(true);
 
-            // Prevent resend if the email already exists (protect against duplicate registrations)
+            // Prevent resend if the email already exists in Firebase Auth
             const existingMethods = await fetchSignInMethodsForEmail(auth, email);
             if (existingMethods && existingMethods.length > 0) {
+                setError("Email already in use. Please login or reset your password.");
+                setLoading(false);
+                return;
+            }
+
+            // Double-check in Firestore users collection as backup
+            const usersRef = collection(db, "users");
+            const q = query(usersRef, where("email", "==", email));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
                 setError("Email already in use. Please login or reset your password.");
                 setLoading(false);
                 return;

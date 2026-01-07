@@ -145,6 +145,7 @@ export default function Inventory() {
             image: product.image
         });
         setShowAddForm(true);
+        window.scrollTo(0, 0);
     };
 
     const handleAddProduct = async () => {
@@ -169,7 +170,6 @@ export default function Inventory() {
                     stockCount: stockCountValue,
                     image: formData.image
                 });
-                alert("Product updated successfully!");
             } else {
                 // Add new product
                 await addDoc(collection(db, "products"), {

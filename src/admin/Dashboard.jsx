@@ -20,7 +20,6 @@ export default function Dashboard() {
         }
 
         if (userRole !== "admin") {
-            alert("Access denied. Admin only.");
             navigate("/");
             return;
         }
@@ -66,7 +65,6 @@ export default function Dashboard() {
                     : order
             ));
 
-            alert("Order status updated successfully!");
         } catch (error) {
             console.error("Error updating order:", error);
             alert("Failed to update order status");
