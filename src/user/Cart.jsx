@@ -180,7 +180,9 @@ export default function Cart() {
                 body: JSON.stringify({
                     orderId: orderId,
                     message,
-                    total
+                    total,
+                    userEmail: currentUser.email,
+                    userName: userDetails.name
                 })
             });
 

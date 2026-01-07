@@ -403,10 +403,41 @@ export default function Signup() {
                         </form>
 
                         <div className="otp-actions">
-                            <button onClick={handleResendOTP} className="btn-link" disabled={loading}>
+                            <button
+                                onClick={handleResendOTP}
+                                className="btn-link"
+                                disabled={loading}
+                                style={{
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                    padding: "8px 12px",
+                                    textDecoration: "underline",
+                                    color: "#3498db",
+                                    background: "none",
+                                    border: "none",
+                                    cursor: "pointer",
+                                    whiteSpace: "nowrap"
+                                }}
+                            >
                                 Resend OTP
                             </button>
-                            <button onClick={handleBackToForm} className="btn-link">
+                            <button
+                                onClick={handleBackToForm}
+                                className="btn-link"
+                                style={{
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                    padding: "8px 12px",
+                                    textDecoration: "underline",
+                                    color: "#3498db",
+                                    background: "none",
+                                    border: "none",
+                                    cursor: "pointer",
+                                    whiteSpace: "nowrap"
+                                }}
+                            >
                                 Change Email
                             </button>
                         </div>

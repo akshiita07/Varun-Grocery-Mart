@@ -152,7 +152,7 @@ app.post("/verify-otp", async (req, res) => {
 
 app.post("/notify", async (req, res) => {
     try {
-        const { orderId, message, total } = req.body;
+        const { orderId, message, total, userEmail, userName } = req.body;
 
         // Send email notification to shopkeeper
         if (SENDGRID_API_KEY && process.env.SHOPKEEPER_EMAIL) {
@@ -167,20 +167,35 @@ app.post("/notify", async (req, res) => {
             console.log("\n========== NEW ORDER ==========");
             console.log("Order ID:", orderId);
             console.log("Total Amount: ₹", total);
-            console.log("Email sent to:", process.env.SHOPKEEPER_EMAIL);
+            console.log("Email sent to shopkeeper:", process.env.SHOPKEEPER_EMAIL);
+        }
+
+        // Send confirmation email to customer
+        if (SENDGRID_API_KEY && userEmail) {
+            const customerMessage = `Dear ${userName},\n\nYour order has been placed successfully!\n\nOrder ID: #${orderId.slice(-6)}\nTotal Amount: ₹${total}\n\nWe will process your order soon and contact you for confirmation.\n\nThank you for shopping with Varun Grocery Mart!`;
+
+            await sgMail.send({
+                from: SMTP_FROM,
+                to: userEmail,
+                subject: `Order Confirmation #${orderId.slice(-6)} - Varun Grocery Mart`,
+                text: customerMessage,
+                html: customerMessage.replace(/\n/g, '<br>')
+            });
+
+            console.log("Order confirmation email sent to customer:", userEmail);
             console.log("================================\n");
 
             return res.status(200).json({
                 success: true,
-                message: "Email notification sent successfully"
+                message: "Order confirmation email sent successfully"
             });
         }
 
         // Error if email not configured
         res.status(400).json({
             success: false,
-            message: "Email not configured. Set SHOPKEEPER_EMAIL environment variable.",
-            error: "Missing SHOPKEEPER_EMAIL"
+            message: "Email not configured. Set SHOPKEEPER_EMAIL and customer email.",
+            error: "Missing email configuration"
         });
     } catch (error) {
         console.error("Error sending notification:", error);

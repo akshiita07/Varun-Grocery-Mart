@@ -2047,10 +2047,16 @@ body {
 
     .otp-actions {
         display: flex;
-        gap: 1rem;
+        gap: 1.5rem;
         margin-top: 1.5rem;
-        justify-content: center !important;
+        justify-content: center;
         flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .otp-actions .btn-link {
+        padding: 0.5rem 1rem;
+        white-space: nowrap;
     }
 
     /* UPI Payment Styles */
